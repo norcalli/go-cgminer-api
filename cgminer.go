@@ -311,12 +311,6 @@ func (miner *CGMiner) EnableGPU(n int) error {
 	return err
 }
 
-func (miner *CGMiner) SetGPUEngine(n int, speed int) error {
-	parameter := fmt.Sprintf("%d", n)
-	_, err := miner.runCommand("gpudisable", parameter)
-	return err
-}
-
 func (miner *CGMiner) DisableGPU(n int) error {
 	parameter := fmt.Sprintf("%d", n)
 	_, err := miner.runCommand("gpudisable", parameter)
