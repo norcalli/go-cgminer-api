@@ -49,34 +49,34 @@ type Summary struct {
 }
 
 type Devs struct {
-	GPU                    int64
-	Enabled                string
-	Status                 string
-	Temperature            float64
-	FanSpeed               int     `json:"Fan Speed"`
-	FanPercent             int64   `json:"Fan Percent"`
-	GPUClock               int64   `json:"GPU Clock"`
-	MemoryClock            int64   `json:"Memory Clock"`
-	GPUVoltage            float64 `json:"GPU Voltage"`
-	Powertune              int64
-	MHSav                  float64 `json:"MHS av"`
-	MHS5s                  float64 `json:"MHS 5s"`
-	Accepted               int64
-	Rejected               int64
-	HardwareErrors         int64   `json:"Hardware Errors"`
-	Utility                float64
-	Intensity              string
-	LastSharePool          int64   `json:"Last Share Pool"`
-	LashShareTime          int64   `json:"Lash Share Time"`
-	TotalMH                float64 `json:"TotalMH"`
-	Diff1Work              int64   `json:"Diff1 Work"`
-	DifficultyAccepted     float64 `json:"Difficulty Accepted"`
-	DifficultyRejected     float64 `json:"Difficulty Rejected"`
-	LastShareDifficulty    float64 `json:"Last Share Difficulty"`
-	LastValidWork          int64   `json:"Last Valid Work"`
-	DeviceHardware         float64 `json:"Device Hardware%"`
-	DeviceRejected         float64 `json:"Device Rejected%"`
-	DeviceElapsed          int64   `json:"Device Elapsed"`
+	GPU                 int64
+	Enabled             string
+	Status              string
+	Temperature         float64
+	FanSpeed            int     `json:"Fan Speed"`
+	FanPercent          int64   `json:"Fan Percent"`
+	GPUClock            int64   `json:"GPU Clock"`
+	MemoryClock         int64   `json:"Memory Clock"`
+	GPUVoltage          float64 `json:"GPU Voltage"`
+	Powertune           int64
+	MHSav               float64 `json:"MHS av"`
+	MHS5s               float64 `json:"MHS 5s"`
+	Accepted            int64
+	Rejected            int64
+	HardwareErrors      int64 `json:"Hardware Errors"`
+	Utility             float64
+	Intensity           string
+	LastSharePool       int64   `json:"Last Share Pool"`
+	LashShareTime       int64   `json:"Lash Share Time"`
+	TotalMH             float64 `json:"TotalMH"`
+	Diff1Work           int64   `json:"Diff1 Work"`
+	DifficultyAccepted  float64 `json:"Difficulty Accepted"`
+	DifficultyRejected  float64 `json:"Difficulty Rejected"`
+	LastShareDifficulty float64 `json:"Last Share Difficulty"`
+	LastValidWork       int64   `json:"Last Valid Work"`
+	DeviceHardware      float64 `json:"Device Hardware%"`
+	DeviceRejected      float64 `json:"Device Rejected%"`
+	DeviceElapsed       int64   `json:"Device Elapsed"`
 }
 
 type Pool struct {
@@ -119,14 +119,14 @@ type summaryResponse struct {
 }
 
 type devsResponse struct {
-	Status  []status  `json:"STATUS"`
-	Devs    []Devs    `json:"DEVS"`
-	Id      int64     `json:"id"`
+	Status []status `json:"STATUS"`
+	Devs   []*Devs  `json:"DEVS"`
+	Id     int64    `json:"id"`
 }
 
 type poolsResponse struct {
 	Status []status `json:"STATUS"`
-	Pools  []Pool   `json:"POOLS"`
+	Pools  []*Pool  `json:"POOLS"`
 	Id     int64    `json:"id"`
 }
 
@@ -179,7 +179,7 @@ func (miner *CGMiner) runCommand(command, argument string) (string, error) {
 }
 
 // Devs returns basic information on the miner. See the Devs struct.
-func (miner *CGMiner) Devs() (*[]Devs, error) {
+func (miner *CGMiner) Devs() ([]*Devs, error) {
 	result, err := miner.runCommand("devs", "")
 	if err != nil {
 		return nil, err
@@ -191,8 +191,7 @@ func (miner *CGMiner) Devs() (*[]Devs, error) {
 		return nil, err
 	}
 
-	var devs = devsResponse.Devs
-	return &devs, err
+	return devsResponse.Devs, err
 }
 
 // Summary returns basic information on the miner. See the Summary struct.
@@ -217,7 +216,7 @@ func (miner *CGMiner) Summary() (*Summary, error) {
 }
 
 // Pools returns a slice of Pool structs, one per pool.
-func (miner *CGMiner) Pools() ([]Pool, error) {
+func (miner *CGMiner) Pools() ([]*Pool, error) {
 	result, err := miner.runCommand("pools", "")
 	if err != nil {
 		return nil, err
@@ -291,5 +290,59 @@ func (miner *CGMiner) Restart() error {
 
 func (miner *CGMiner) Quit() error {
 	_, err := miner.runCommand("quit", "")
+	return err
+}
+
+func (miner *CGMiner) SetGPUFan(n int, speed int) error {
+	switch {
+	case speed < 0:
+		speed = 0
+	case speed > 100:
+		speed = 100
+	}
+	parameter := fmt.Sprintf("%d,%d", n, speed)
+	_, err := miner.runCommand("gpufan", parameter)
+	return err
+}
+
+func (miner *CGMiner) EnableGPU(n int) error {
+	parameter := fmt.Sprintf("%d", n)
+	_, err := miner.runCommand("gpuenable", parameter)
+	return err
+}
+
+func (miner *CGMiner) SetGPUEngine(n int, speed int) error {
+	parameter := fmt.Sprintf("%d", n)
+	_, err := miner.runCommand("gpudisable", parameter)
+	return err
+}
+
+func (miner *CGMiner) DisableGPU(n int) error {
+	parameter := fmt.Sprintf("%d", n)
+	_, err := miner.runCommand("gpudisable", parameter)
+	return err
+}
+
+func (miner *CGMiner) RestartGPU(n int) error {
+	parameter := fmt.Sprintf("%d", n)
+	_, err := miner.runCommand("gpurestart", parameter)
+	return err
+}
+
+func (miner *CGMiner) SetGPUEngine(n int, speed int) error {
+	parameter := fmt.Sprintf("%d,%d", n, speed)
+	_, err := miner.runCommand("gpuengine", parameter)
+	return err
+}
+
+func (miner *CGMiner) SetGPUMemory(n int, speed int) error {
+	parameter := fmt.Sprintf("%d,%d", n, speed)
+	_, err := miner.runCommand("gpumem", parameter)
+	return err
+}
+
+func (miner *CGMiner) SetGPUIntensity(n int, i int) error {
+	parameter := fmt.Sprintf("%d,%d", n, i)
+	_, err := miner.runCommand("gpuintensity", parameter)
 	return err
 }
